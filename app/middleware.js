@@ -1,27 +1,20 @@
+// middleware.js
 import { NextResponse } from "next/server";
-import { getAuth } from "firebase/auth";
-import { auth } from "./app/firebaseConfig";
 
-export async function middleware(req) {
+export function middleware(req) {
   const url = req.nextUrl.clone();
-  const user = auth.currentUser;
 
-  // 🔒 If user is not logged in and trying to access protected route
-  if (!user && url.pathname.startsWith("/dashboard")) {
+  // Redirect root URL ("/") to "/login"
+  if (url.pathname === "/") {
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  // 🚫 If user is logged in, prevent access to /login or /signup
-  if (user && (url.pathname === "/login" || url.pathname === "/signup")) {
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
-  }
-
+  // Allow all other routes to continue normally
   return NextResponse.next();
 }
 
-// Define which routes this applies to
+// Apply middleware only on root route
 export const config = {
-  matcher: ["/dashboard", "/login", "/signup"],
+  matcher: ["/"],
 };
