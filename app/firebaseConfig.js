@@ -1,8 +1,9 @@
 // app/firebaseConfig.js
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 
+// ✅ Use environment variables for production safety
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -13,6 +14,14 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-const app = initializeApp(firebaseConfig);
+// ✅ Initialize Firebase only once
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+// ✅ Export Firebase Auth instance
 export const auth = getAuth(app);
-export const analytics = typeof window !== "undefined" ? getAnalytics(app) : null;
+
+// ✅ Optional: Analytics (works only in browser)
+export const analytics =
+  typeof window !== "undefined" ? getAnalytics(app) : null;
+
+export default app;
