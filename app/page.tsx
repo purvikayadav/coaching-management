@@ -7,6 +7,12 @@ export default function HomePage() {
       <p>Manage your coaching sessions, clients, and schedules efficiently.</p>
 
       <Link
+        href="/signup"
+        className="inline-block mt-4 text-blue-600 hover:underline"
+      >
+        Go to Signup
+      </Link><br/>
+      <Link
         href="/login"
         className="inline-block mt-4 text-blue-600 hover:underline"
       >
