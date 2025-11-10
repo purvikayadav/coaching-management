@@ -8,12 +8,12 @@ import {
   GraduationCap,
   BarChart3,
   LogOut,
-  CircleUserRound,
 } from "lucide-react";
 import { ROUTES_PATH } from "../constants/routePaths";
 import { signOut } from "firebase/auth";
-import { auth } from "../../app/firebaseConfig";
+import { auth, db } from "../../app/firebaseConfig";
 import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
 
 const sidebarLinks = [
   { name: "Students", href: ROUTES_PATH.DASHBOARD, icon: Users },
@@ -26,12 +26,30 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [userEmail, setUserEmail] = useState("");
+  const [profileImage, setProfileImage] = useState(""); // ✅ store profile image
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) setUserEmail(user.email);
-      else setUserEmail("");
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        setUserEmail(user.email);
+
+        // ✅ Fetch profile image from Firestore
+        try {
+          const userRef = doc(db, "users", user.uid);
+          const docSnap = await getDoc(userRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setProfileImage(data.photoURL || ""); // fallback to empty string
+          }
+        } catch (error) {
+          console.error("Error fetching profile image:", error);
+        }
+      } else {
+        setUserEmail("");
+        setProfileImage("");
+      }
     });
+
     return () => unsubscribe();
   }, []);
 
@@ -41,7 +59,7 @@ export default function Sidebar() {
   };
 
   const goToProfile = () => {
-    router.push(ROUTES_PATH.PROFILE); // 👈 redirect to profile page
+    router.push(ROUTES_PATH.PROFILE);
   };
 
   return (
@@ -77,12 +95,22 @@ export default function Sidebar() {
 
       {/* Bottom Section */}
       <div className="p-4 border-t flex flex-col gap-3">
-        {/* 👇 Clickable user email section */}
+        {/* Profile Image or Fallback Icon */}
         <div
           onClick={goToProfile}
-          className="flex items-center gap-2 p-2 rounded-lg hover:text-blue-600 cursor-pointer transition hover:underline "
+          className="flex items-center gap-2 p-2 rounded-lg hover:text-blue-600 cursor-pointer transition hover:underline"
         >
-          <CircleUserRound className="w-6 h-6 text-gray-600" />
+          {profileImage ? (
+            <img
+              src={profileImage}
+              alt="Profile"
+              className="w-8 h-8 rounded-full object-cover border-2 border-blue-400"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+              <span className="text-gray-600">👤</span>
+            </div>
+          )}
           <span className="text-sm text-gray-800 truncate">{userEmail}</span>
         </div>
 
