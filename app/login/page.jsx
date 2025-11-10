@@ -6,6 +6,7 @@ import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebaseConfig";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import NProgress from "nprogress";
+import { ROUTES_PATH } from "../../lib/constants/routePaths";
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -17,7 +18,7 @@ export default function LoginPage() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        router.push("/dashboard");
+        router.push(ROUTES_PATH.DASHBOARD);
       }
     });
     return () => unsubscribe();
@@ -35,7 +36,7 @@ export default function LoginPage() {
     NProgress.start();
     await signInWithEmailAndPassword(auth, email, password);
     NProgress.done();
-    router.push("/dashboard");
+    router.push(ROUTES_PATH.DASHBOARD);
   } catch (err) {
     NProgress.done();
     setError("Invalid email or password");
