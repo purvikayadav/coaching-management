@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Users, BookOpen, GraduationCap, BarChart3, LogOut, User, CircleUserRound } from "lucide-react";
+import {
+  Users,
+  BookOpen,
+  GraduationCap,
+  BarChart3,
+  LogOut,
+  CircleUserRound,
+} from "lucide-react";
 import { ROUTES_PATH } from "../constants/routePaths";
 import { signOut } from "firebase/auth";
 import { auth } from "../../app/firebaseConfig";
@@ -31,6 +38,10 @@ export default function Sidebar() {
   const handleLogout = async () => {
     await signOut(auth);
     router.push("/login");
+  };
+
+  const goToProfile = () => {
+    router.push(ROUTES_PATH.PROFILE); // 👈 redirect to profile page
   };
 
   return (
@@ -66,10 +77,15 @@ export default function Sidebar() {
 
       {/* Bottom Section */}
       <div className="p-4 border-t flex flex-col gap-3">
-        <div className="flex items-center gap-1">
-          <CircleUserRound size={44}  className="w-6 h-6 text-gray-600" />
+        {/* 👇 Clickable user email section */}
+        <div
+          onClick={goToProfile}
+          className="flex items-center gap-2 p-2 rounded-lg hover:text-blue-600 cursor-pointer transition hover:underline "
+        >
+          <CircleUserRound className="w-6 h-6 text-gray-600" />
           <span className="text-sm text-gray-800 truncate">{userEmail}</span>
         </div>
+
         <button
           onClick={handleLogout}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition cursor-pointer"
