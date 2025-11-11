@@ -2,18 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  Users,
-  BookOpen,
-  GraduationCap,
-  BarChart3,
-  LogOut,
-} from "lucide-react";
+import { Users, BookOpen, GraduationCap, BarChart3, LogOut } from "lucide-react";
 import { ROUTES_PATH } from "../constants/routePaths";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../../app/firebaseConfig";
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore"; // use onSnapshot for realtime updates
 
 const sidebarLinks = [
   { name: "Students", href: ROUTES_PATH.DASHBOARD, icon: Users },
@@ -26,31 +20,31 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [userEmail, setUserEmail] = useState("");
-  const [profileImage, setProfileImage] = useState(""); // ✅ store profile image
+  const [userName, setUserName] = useState("");
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
       if (user) {
         setUserEmail(user.email);
 
-        // ✅ Fetch profile image from Firestore
-        try {
-          const userRef = doc(db, "users", user.uid);
-          const docSnap = await getDoc(userRef);
+        // ✅ Realtime listener for user name from Firestore
+        const userRef = doc(db, "users", user.uid);
+        const unsubscribeSnapshot = onSnapshot(userRef, (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
-            setProfileImage(data.photoURL || ""); // fallback to empty string
+            setUserName(data.name || "No Name");
           }
-        } catch (error) {
-          console.error("Error fetching profile image:", error);
-        }
+        });
+
+        // cleanup snapshot listener
+        return () => unsubscribeSnapshot();
       } else {
         setUserEmail("");
-        setProfileImage("");
+        setUserName("");
       }
     });
 
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, []);
 
   const handleLogout = async () => {
@@ -66,14 +60,11 @@ export default function Sidebar() {
     <aside className="w-64 h-screen bg-white shadow-md flex flex-col justify-between border-r">
       {/* Top Section */}
       <div className="p-4">
-        <h2 className="text-xl font-semibold mb-6 text-blue-600 text-center">
-          VKG
-        </h2>
+        <h2 className="text-xl font-semibold mb-6 text-blue-600 text-center">VKG</h2>
 
         <nav className="space-y-2">
           {sidebarLinks.map((link) => {
-            const isActive =
-              pathname === link.href || pathname.startsWith(`${link.href}/`);
+            const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
             const Icon = link.icon;
             return (
               <Link
@@ -94,24 +85,21 @@ export default function Sidebar() {
       </div>
 
       {/* Bottom Section */}
-      <div className="p-4 border-t flex flex-col gap-3">
-        {/* Profile Image or Fallback Icon */}
+      <div className="p-4 border-t flex flex-col gap-2">
         <div
           onClick={goToProfile}
-          className="flex items-center gap-2 p-2 rounded-lg hover:text-blue-600 cursor-pointer transition hover:underline"
+          className="flex items-center gap-2 p-2 rounded-lg hover:text-blue-600 cursor-pointer transition"
         >
-          {profileImage ? (
-            <img
-              src={profileImage}
-              alt="Profile"
-              className="w-8 h-8 rounded-full object-cover border-2 border-blue-400"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-600">👤</span>
-            </div>
-          )}
-          <span className="text-sm text-gray-800 truncate">{userEmail}</span>
+          {/* ✅ Left corner user icon */}
+          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+            <span className="text-gray-600">👤</span>
+          </div>
+
+          {/* Name and email */}
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-gray-800 truncate">{userName}</span>
+            <span className="text-xs text-gray-500 truncate">{userEmail}</span>
+          </div>
         </div>
 
         <button
